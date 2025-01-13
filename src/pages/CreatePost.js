@@ -11,7 +11,7 @@ function CreatePost() {
   const [category, setCategory] = useState('');
   const navigate = useNavigate();
 
-  const categories = ['Technology', 'Lifestyle', 'Travel', 'Food', 'Other'];
+  const categories = ['Technology', 'Git/Github', 'Travel', 'Food', 'Other'];
 
   const createPost = async (e) => {
     e.preventDefault();

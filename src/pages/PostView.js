@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase-config';
 import { Container, Typography, Paper, Button } from '@mui/material';
+import ReactMarkdown from 'react-markdown';
 
 function PostView() {
   const { id } = useParams();
@@ -51,7 +52,7 @@ function PostView() {
           Category: {post.category}
         </Typography>
         <Typography style={{ whiteSpace: 'pre-wrap' }}>
-          {post.content}
+          <ReactMarkdown>{post.content}</ReactMarkdown>
         </Typography>
         <Button variant="contained" color="primary" onClick={() => navigate(`/edit/${id}`)}>
           Edit Post
