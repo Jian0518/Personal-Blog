@@ -13,7 +13,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material';
 
 function App() {
-  const categories = ['Technology', 'Git', 'Travel', 'Behavioural Questions', 'Other'];
+  const categories = ['Technology', 'Git', 'Javascript', 'Behavioural Questions', 'Other'];
 
   const theme = createTheme({
     typography: {
