@@ -17,6 +17,13 @@ function Navbar({ categories }) {
     setAnchorEl(null);
   };
 
+  const handleLogout = () => {
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      logout();
+    }
+  };
+
   return (
     <AppBar position="static" sx={{ 
       background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
@@ -37,7 +44,7 @@ function Navbar({ categories }) {
             }
           }}
         >
-          DevBlog
+          Jian Wei Blog
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <Button 
@@ -82,7 +89,7 @@ function Navbar({ categories }) {
           {user ? (
             <>
               <Avatar src={user.photoURL} alt={user.displayName} />
-              <Button color="inherit" onClick={logout}>
+              <Button color="inherit" onClick={handleLogout}>
                 Logout
               </Button>
             </>

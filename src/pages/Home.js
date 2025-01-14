@@ -39,7 +39,8 @@ function Home() {
           textAlign: 'center', 
           mb: 4,
           color: '#1976d2',
-          fontWeight: 'bold'
+          fontWeight: 'bold',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.1)'
         }}
       >
         Latest Posts
@@ -49,9 +50,13 @@ function Home() {
           <Grid item xs={12} key={post.id}>
             <Card 
               sx={{ 
+                background: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '12px',
+                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
                 '&:hover': {
                   transform: 'translateY(-4px)',
-                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                  boxShadow: '0 12px 40px 0 rgba(31, 38, 135, 0.25)',
                   transition: 'all 0.3s ease'
                 }
               }}
@@ -71,7 +76,13 @@ function Home() {
                 >
                   {post.title}
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 2, mt: 1, color: 'text.secondary' }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: 2, 
+                  mt: 1, 
+                  color: 'text.secondary',
+                  alignItems: 'center'
+                }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <CategoryIcon fontSize="small" />
                     <Typography variant="body2">
