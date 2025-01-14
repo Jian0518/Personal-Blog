@@ -4,6 +4,8 @@ import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase-config';
 import { Container, Typography, Paper, Button } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
+import Comments from '../components/Comments';
+import { useAuth } from '../contexts/AuthContext';
 
 function PostView() {
   const { id } = useParams();
@@ -11,6 +13,7 @@ function PostView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { isOwner } = useAuth();
 
   useEffect(() => {
     const getPost = async () => {
@@ -54,13 +57,18 @@ function PostView() {
         <Typography style={{ whiteSpace: 'pre-wrap' }}>
           <ReactMarkdown>{post.content}</ReactMarkdown>
         </Typography>
-        <Button variant="contained" color="primary" onClick={() => navigate(`/edit/${id}`)}>
-          Edit Post
-        </Button>
-        <Button variant="contained" color="secondary" onClick={handleDelete} style={{ marginLeft: '1rem' }}>
-          Delete Post
-        </Button>
+        {isOwner && (
+          <>
+            <Button variant="contained" color="primary" onClick={() => navigate(`/edit/${id}`)}>
+              Edit Post
+            </Button>
+            <Button variant="contained" color="secondary" onClick={handleDelete} style={{ marginLeft: '1rem' }}>
+              Delete Post
+            </Button>
+          </>
+        )}
       </Paper>
+      <Comments postId={id} />
     </Container>
   );
 }

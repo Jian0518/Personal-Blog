@@ -9,23 +9,26 @@ import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
+import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
-  const categories = ['Technology', 'Git', 'Travel', 'Food', 'Other'];
+  const categories = ['Technology', 'Git', 'Travel', 'Behavioural Questions', 'Other'];
 
   return (
-    <Router>
-      <div className="App" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-        <Navbar categories={categories} />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/create" element={<CreatePost />} />
-          <Route path="/edit/:id" element={<EditPost />} />
-          <Route path="/category/:category" element={<CategoryView />} />
-          <Route path="/post/:id" element={<PostView />} />
-        </Routes>
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="App" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+          <Navbar categories={categories} />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/create" element={<CreatePost />} />
+            <Route path="/edit/:id" element={<EditPost />} />
+            <Route path="/category/:category" element={<CategoryView />} />
+            <Route path="/post/:id" element={<PostView />} />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 

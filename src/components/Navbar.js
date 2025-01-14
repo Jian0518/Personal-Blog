@@ -1,11 +1,13 @@
-import { AppBar, Toolbar, Typography, Button, Menu, MenuItem, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Menu, MenuItem, Box, Avatar } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import CreateIcon from '@mui/icons-material/Create';
 import CategoryIcon from '@mui/icons-material/Category';
+import { useAuth } from '../contexts/AuthContext';
 
 function Navbar({ categories }) {
   const [anchorEl, setAnchorEl] = useState(null);
+  const { user, login, logout, isOwner } = useAuth();
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -37,17 +39,11 @@ function Navbar({ categories }) {
         >
           DevBlog
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <Button 
             color="inherit" 
             onClick={handleMenuClick}
             startIcon={<CategoryIcon />}
-            sx={{
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                transform: 'scale(1.05)'
-              }
-            }}
           >
             Categories
           </Button>
@@ -58,12 +54,7 @@ function Navbar({ categories }) {
             PaperProps={{
               sx: {
                 mt: 1,
-                boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
-                '& .MuiMenuItem-root': {
-                  '&:hover': {
-                    backgroundColor: '#e3f2fd'
-                  }
-                }
+                boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)'
               }
             }}
           >
@@ -78,20 +69,28 @@ function Navbar({ categories }) {
               </MenuItem>
             ))}
           </Menu>
-          <Button 
-            color="inherit" 
-            component={Link} 
-            to="/create"
-            startIcon={<CreateIcon />}
-            sx={{
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                transform: 'scale(1.05)'
-              }
-            }}
-          >
-            Create Post
-          </Button>
+          {isOwner && (
+            <Button 
+              color="inherit" 
+              component={Link} 
+              to="/create"
+              startIcon={<CreateIcon />}
+            >
+              Create Post
+            </Button>
+          )}
+          {user ? (
+            <>
+              <Avatar src={user.photoURL} alt={user.displayName} />
+              <Button color="inherit" onClick={logout}>
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Button color="inherit" onClick={login}>
+              Login with Google
+            </Button>
+          )}
         </Box>
       </Toolbar>
     </AppBar>
