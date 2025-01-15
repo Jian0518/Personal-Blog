@@ -13,8 +13,6 @@ import { AuthProvider } from './contexts/AuthContext';
 import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material';
 
 function App() {
-  const categories = ['Technology', 'Git', 'Javascript', 'Behavioural Questions', 'Other'];
-
   const theme = createTheme({
     typography: {
       fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
@@ -51,7 +49,7 @@ function App() {
             }} />
             
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <Navbar categories={categories} />
+              <Navbar />
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/create" element={<CreatePost />} />

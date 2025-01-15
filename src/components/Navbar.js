@@ -1,13 +1,29 @@
 import { AppBar, Toolbar, Typography, Button, Menu, MenuItem, Box, Avatar } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CreateIcon from '@mui/icons-material/Create';
 import CategoryIcon from '@mui/icons-material/Category';
 import { useAuth } from '../contexts/AuthContext';
+import SettingsIcon from '@mui/icons-material/Settings';
+import CategoryManager from './CategoryManager';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase-config';
 
-function Navbar({ categories }) {
+function Navbar() {
   const [anchorEl, setAnchorEl] = useState(null);
   const { user, login, logout, isOwner } = useAuth();
+  const [categories, setCategories] = useState([]);
+  const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    const querySnapshot = await getDocs(collection(db, "categories"));
+    const categoriesData = querySnapshot.docs.map(doc => doc.data().name);
+    setCategories(categoriesData);
+  };
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -76,6 +92,24 @@ function Navbar({ categories }) {
               </MenuItem>
             ))}
           </Menu>
+          {isOwner && (
+            <>
+              <Button 
+                color="inherit" 
+                onClick={() => setCategoryManagerOpen(true)}
+                startIcon={<SettingsIcon />}
+              >
+                Manage Categories
+              </Button>
+              <CategoryManager 
+                open={categoryManagerOpen} 
+                onClose={() => {
+                  setCategoryManagerOpen(false);
+                  fetchCategories();
+                }}
+              />
+            </>
+          )}
           {isOwner && (
             <Button 
               color="inherit" 

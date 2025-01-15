@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase-config';
 import { TextField, Button, Container, MenuItem } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
@@ -10,8 +10,17 @@ function CreatePost() {
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('');
   const navigate = useNavigate();
+  const [categories, setCategories] = useState([]);
 
-  const categories = ['Technology', 'Git', 'Javascript', 'Behavioural Questions', 'Other'];
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const querySnapshot = await getDocs(collection(db, "categories"));
+      const categoriesData = querySnapshot.docs.map(doc => doc.data().name);
+      setCategories(categoriesData);
+    };
+
+    fetchCategories();
+  }, []);
 
   const createPost = async (e) => {
     e.preventDefault();
