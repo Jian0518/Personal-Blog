@@ -53,12 +53,15 @@ function CategoryManager({ open, onClose }) {
   };
 
   const handleDeleteCategory = async (categoryId) => {
-    try {
-      await deleteDoc(doc(db, "categories", categoryId));
-      fetchCategories();
-    } catch (err) {
-      setError('Failed to delete category');
-      console.error(err);
+    const confirmDelete = window.confirm("Are you sure you want to delete this category?");
+    if (confirmDelete) {
+      try {
+        await deleteDoc(doc(db, "categories", categoryId));
+        fetchCategories();
+      } catch (err) {
+        setError('Failed to delete category');
+        console.error(err);
+      }
     }
   };
 
