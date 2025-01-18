@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase-config';
-import { Container, Typography, Paper, Button } from '@mui/material';
+import { Container, Typography, Paper, Button, Box } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
 import Comments from '../components/Comments';
 import { useAuth } from '../contexts/AuthContext';
@@ -38,8 +38,11 @@ function PostView() {
   }, [id]);
 
   const handleDelete = async () => {
-    await deleteDoc(doc(db, "posts", id));
-    navigate('/');
+    const confirmDelete = window.confirm("Are you sure you want to delete this post?");
+    if (confirmDelete) {
+      await deleteDoc(doc(db, "posts", id));
+      navigate('/');
+    }
   };
 
   if (loading) return <div>Loading...</div>;
@@ -54,9 +57,14 @@ function PostView() {
         <Typography color="textSecondary" gutterBottom>
           Category: {post.category}
         </Typography>
-        <Typography style={{ whiteSpace: 'pre-wrap' }}>
+        <Box sx={{ 
+          overflow: 'auto', 
+          backgroundColor: '#fff', 
+          padding: '16px', 
+          borderRadius: '4px' 
+        }}>
           <ReactMarkdown>{post.content}</ReactMarkdown>
-        </Typography>
+        </Box>
         {isOwner && (
           <>
             <Button variant="contained" color="primary" onClick={() => navigate(`/edit/${id}`)}>
