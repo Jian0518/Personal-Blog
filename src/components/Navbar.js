@@ -8,6 +8,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import CategoryManager from './CategoryManager';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase-config';
+import Search from './Search';
 
 function Navbar() {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -63,6 +64,7 @@ function Navbar() {
           Jian Wei Blog
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Search />
           <Button 
             color="inherit" 
             onClick={handleMenuClick}
