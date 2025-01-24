@@ -1,8 +1,23 @@
-import { AppBar, Toolbar, Typography, Button, Menu, MenuItem, Box, Avatar } from '@mui/material';
+import { 
+  AppBar, 
+  Toolbar, 
+  Typography, 
+  Button, 
+  Menu, 
+  MenuItem, 
+  Box, 
+  Avatar,
+  Popper,
+  Paper,
+  Grow,
+  MenuList,
+  ClickAwayListener
+} from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import CreateIcon from '@mui/icons-material/Create';
 import CategoryIcon from '@mui/icons-material/Category';
+import ArrowRightIcon from '@mui/icons-material/ArrowRight';
 import { useAuth } from '../contexts/AuthContext';
 import SettingsIcon from '@mui/icons-material/Settings';
 import CategoryManager from './CategoryManager';
@@ -12,6 +27,8 @@ import Search from './Search';
 
 function Navbar() {
   const [anchorEl, setAnchorEl] = useState(null);
+  const [openSubMenu, setOpenSubMenu] = useState(null);
+  const [subMenuAnchorEl, setSubMenuAnchorEl] = useState(null);
   const { user, login, logout, isOwner } = useAuth();
   const [categories, setCategories] = useState([]);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
@@ -22,9 +39,16 @@ function Navbar() {
 
   const fetchCategories = async () => {
     const querySnapshot = await getDocs(collection(db, "categories"));
-    const categoriesData = querySnapshot.docs.map(doc => doc.data().name);
+    const categoriesData = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
     setCategories(categoriesData);
   };
+
+  const parentCategories = categories.filter(cat => !cat.parentId);
+  const getChildCategories = (parentId) => 
+    categories.filter(cat => cat.parentId === parentId);
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -32,6 +56,18 @@ function Navbar() {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+    setOpenSubMenu(null);
+  };
+
+  const handleParentHover = (event, categoryId) => {
+    if (getChildCategories(categoryId).length > 0) {
+      setOpenSubMenu(categoryId);
+      setSubMenuAnchorEl(event.currentTarget);
+    }
+  };
+
+  const handleSubMenuClose = () => {
+    setOpenSubMenu(null);
   };
 
   const handleLogout = () => {
@@ -83,17 +119,66 @@ function Navbar() {
               }
             }}
           >
-            {categories.map((category) => (
+            {parentCategories.map((category) => (
               <MenuItem 
-                key={category} 
-                component={Link} 
-                to={`/category/${category}`} 
+                key={category.id}
+                component={Link}
+                to={`/category/${category.name}`}
                 onClick={handleMenuClose}
+                onMouseEnter={(e) => handleParentHover(e, category.id)}
+                sx={{ 
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
               >
-                {category}
+                {category.name}
+                {getChildCategories(category.id).length > 0 && <ArrowRightIcon />}
               </MenuItem>
             ))}
+            {categories
+              .filter(cat => !cat.parentId && !parentCategories.find(p => p.id === cat.id))
+              .map((category) => (
+                <MenuItem 
+                  key={category.id}
+                  component={Link}
+                  to={`/category/${category.name}`}
+                  onClick={handleMenuClose}
+                >
+                  {category.name}
+                </MenuItem>
+              ))}
           </Menu>
+          <Popper
+            open={Boolean(openSubMenu)}
+            anchorEl={subMenuAnchorEl}
+            placement="right-start"
+            transition
+            sx={{ zIndex: 1300 }}
+          >
+            {({ TransitionProps }) => (
+              <Grow {...TransitionProps}>
+                <Paper>
+                  <ClickAwayListener onClickAway={handleSubMenuClose}>
+                    <MenuList>
+                      {openSubMenu && getChildCategories(openSubMenu).map((child) => (
+                        <MenuItem
+                          key={child.id}
+                          component={Link}
+                          to={`/category/${child.name}`}
+                          onClick={handleMenuClose}
+                          sx={{ minWidth: 150 }}
+                        >
+                          {child.name}
+                        </MenuItem>
+                      ))}
+                    </MenuList>
+                  </ClickAwayListener>
+                </Paper>
+              </Grow>
+            )}
+          </Popper>
           {isOwner && (
             <>
               <Button 
