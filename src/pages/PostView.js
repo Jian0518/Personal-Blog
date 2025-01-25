@@ -4,6 +4,8 @@ import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase-config';
 import { Container, Typography, Paper, Button, Box } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Comments from '../components/Comments';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -63,7 +65,29 @@ function PostView() {
           padding: '16px', 
           borderRadius: '4px' 
         }}>
-          <ReactMarkdown>{post.content}</ReactMarkdown>
+          <ReactMarkdown
+            components={{
+              code({node, inline, className, children, ...props}) {
+                const match = /language-(\w+)/.exec(className || '');
+                return !inline && match ? (
+                  <SyntaxHighlighter
+                    style={vscDarkPlus}
+                    language={match[1]}
+                    PreTag="div"
+                    {...props}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                ) : (
+                  <code className={className} {...props}>
+                    {children}
+                  </code>
+                );
+              }
+            }}
+          >
+            {post.content}
+          </ReactMarkdown>
         </Box>
         {isOwner && (
           <>
