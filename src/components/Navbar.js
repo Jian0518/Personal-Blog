@@ -46,9 +46,31 @@ function Navbar() {
     setCategories(categoriesData);
   };
 
-  const parentCategories = categories.filter(cat => !cat.parentId);
-  const getChildCategories = (parentId) => 
-    categories.filter(cat => cat.parentId === parentId);
+  const parentCategories = categories.filter(cat => {
+    if (!isOwner) {
+      return !cat.parentId && cat.name !== "Behavioural Questions";
+    }
+    return !cat.parentId;
+  });
+
+  const getChildCategories = (parentId) => {
+    if (!isOwner) {
+      return categories.filter(cat => 
+        cat.parentId === parentId && cat.name !== "Behavioural Questions"
+      );
+    }
+    return categories.filter(cat => cat.parentId === parentId);
+  };
+
+  const standaloneCategories = categories
+    .filter(cat => {
+      if (!isOwner) {
+        return !cat.parentId && 
+               !parentCategories.find(p => p.id === cat.id) && 
+               cat.name !== "Behavioural Questions";
+      }
+      return !cat.parentId && !parentCategories.find(p => p.id === cat.id);
+    });
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -137,18 +159,16 @@ function Navbar() {
                 {getChildCategories(category.id).length > 0 && <ArrowRightIcon />}
               </MenuItem>
             ))}
-            {categories
-              .filter(cat => !cat.parentId && !parentCategories.find(p => p.id === cat.id))
-              .map((category) => (
-                <MenuItem 
-                  key={category.id}
-                  component={Link}
-                  to={`/category/${category.name}`}
-                  onClick={handleMenuClose}
-                >
-                  {category.name}
-                </MenuItem>
-              ))}
+            {standaloneCategories.map((category) => (
+              <MenuItem 
+                key={category.id}
+                component={Link}
+                to={`/category/${category.name}`}
+                onClick={handleMenuClose}
+              >
+                {category.name}
+              </MenuItem>
+            ))}
           </Menu>
           <Popper
             open={Boolean(openSubMenu)}

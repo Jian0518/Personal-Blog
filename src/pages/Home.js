@@ -5,22 +5,30 @@ import { Link } from 'react-router-dom';
 import { Container, Card, CardContent, Typography, Grid, Box, Pagination } from '@mui/material';
 import CategoryIcon from '@mui/icons-material/Category';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { useAuth } from '../contexts/AuthContext';
 
 function Home() {
   const [posts, setPosts] = useState([]);
   const [page, setPage] = useState(1);
   const postsPerPage = 6;
+  const { isOwner } = useAuth();
 
   useEffect(() => {
     const getPosts = async () => {
       const postsQuery = query(collection(db, "posts"), orderBy("timestamp", "desc"));
       const data = await getDocs(postsQuery);
       const postsData = data.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-      setPosts(postsData);
+      
+      // Filter out private posts for non-owner users
+      const filteredPosts = isOwner 
+        ? postsData 
+        : postsData.filter(post => post.category !== "Behavioural Questions");
+      
+      setPosts(filteredPosts);
     };
 
     getPosts();
-  }, []);
+  }, [isOwner]);
 
   const formatDate = (timestamp) => {
     if (!timestamp) return '';

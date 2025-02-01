@@ -6,9 +6,13 @@ import { Container, Typography, Grid, Card, CardContent, Box, Pagination } from 
 import { Link } from 'react-router-dom';
 import CategoryIcon from '@mui/icons-material/Category';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 function CategoryView() {
   const { category } = useParams();
+  const { isOwner } = useAuth();
+  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,6 +20,12 @@ function CategoryView() {
   const postsPerPage = 6;
 
   useEffect(() => {
+    // Redirect non-owner users trying to access private category
+    if (!isOwner && category === "Behavioural Questions") {
+      navigate('/');
+      return;
+    }
+
     const fetchPostsByCategory = async () => {
       try {
         setLoading(true);
@@ -32,7 +42,7 @@ function CategoryView() {
     };
 
     fetchPostsByCategory();
-  }, [category]);
+  }, [category, isOwner, navigate]);
 
   const formatDate = (timestamp) => {
     if (!timestamp) return '';

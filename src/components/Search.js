@@ -17,6 +17,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase-config';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 function Search() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,6 +25,7 @@ function Search() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const navigate = useNavigate();
+  const { isOwner } = useAuth();
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -35,12 +37,14 @@ function Search() {
       const postsRef = collection(db, "posts");
       const searchTermLower = searchTerm.toLowerCase();
       
-      // Get all posts and filter them
       const querySnapshot = await getDocs(postsRef);
       const results = [];
       
       querySnapshot.forEach((doc) => {
         const post = doc.data();
+        if (!isOwner && post.category === "Behavioural Questions") {
+          return;
+        }
         if (
           post.title.toLowerCase().includes(searchTermLower) ||
           post.content.toLowerCase().includes(searchTermLower)
