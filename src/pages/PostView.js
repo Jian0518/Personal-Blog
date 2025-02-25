@@ -4,6 +4,7 @@ import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase-config';
 import { Container, Typography, Paper, Button, Box } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Comments from '../components/Comments';
@@ -63,9 +64,26 @@ function PostView() {
           overflow: 'auto', 
           backgroundColor: '#fff', 
           padding: '16px', 
-          borderRadius: '4px' 
+          borderRadius: '4px',
+          '& table': {
+            borderCollapse: 'collapse',
+            width: '100%',
+            marginBottom: '1rem'
+          },
+          '& th, & td': {
+            border: '1px solid #ddd',
+            padding: '8px',
+            textAlign: 'left'
+          },
+          '& th': {
+            backgroundColor: '#f5f5f5'
+          },
+          '& tr:nth-of-type(even)': {
+            backgroundColor: '#f9f9f9'
+          }
         }}>
           <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
             components={{
               code({node, inline, className, children, ...props}) {
                 const match = /language-(\w+)/.exec(className || '');

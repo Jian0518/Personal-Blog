@@ -6,6 +6,7 @@ import { TextField, Button, Container, MenuItem, Grid, Paper, Typography } from 
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import remarkGfm from 'remark-gfm';
 
 function CreatePost() {
   const [title, setTitle] = useState('');
@@ -108,6 +109,7 @@ function CreatePost() {
                 </Typography>
               )}
               <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
                 components={{
                   code({node, inline, className, children, ...props}) {
                     const match = /language-(\w+)/.exec(className || '');
