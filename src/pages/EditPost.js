@@ -2,17 +2,20 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase-config';
-import { TextField, Button, Container, Grid, Paper, Typography } from '@mui/material';
+import { TextField, Button, Container, Grid, Paper, Typography, MenuItem } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
+import { getDocs, collection } from 'firebase/firestore';
 
 function EditPost() {
   const { id } = useParams();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [category, setCategory] = useState('');
   const navigate = useNavigate();
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -22,6 +25,7 @@ function EditPost() {
         const postData = docSnap.data();
         setTitle(postData.title);
         setContent(postData.content);
+        setCategory(postData.category);
       } else {
         console.error("No such document!");
       }
@@ -30,12 +34,25 @@ function EditPost() {
     fetchPost();
   }, [id]);
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const querySnapshot = await getDocs(collection(db, "categories"));
+      const categoriesData = querySnapshot.docs.map(doc => doc.data().name);
+      // Sort categories alphabetically
+      const sortedCategories = categoriesData.sort((a, b) => a.localeCompare(b));
+      setCategories(sortedCategories);
+    };
+
+    fetchCategories();
+  }, []);
+
   const handleUpdate = async (e) => {
     e.preventDefault();
     const docRef = doc(db, "posts", id);
     await updateDoc(docRef, {
       title,
       content,
+      category,
     });
     navigate(`/post/${id}`);
   };
@@ -57,6 +74,20 @@ function EditPost() {
                 onChange={(e) => setTitle(e.target.value)}
                 margin="normal"
               />
+              <TextField
+                select
+                fullWidth
+                label="Category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                margin="normal"
+              >
+                {categories.map((cat) => (
+                  <MenuItem key={cat} value={cat}>
+                    {cat}
+                  </MenuItem>
+                ))}
+              </TextField>
               <TextField
                 fullWidth
                 label="Content"
@@ -93,6 +124,11 @@ function EditPost() {
               <Typography variant="h4" gutterBottom>
                 {title || 'Title'}
               </Typography>
+              {category && (
+                <Typography color="textSecondary" gutterBottom>
+                  Category: {category}
+                </Typography>
+              )}
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{

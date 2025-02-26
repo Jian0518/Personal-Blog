@@ -19,7 +19,9 @@ function CreatePost() {
     const fetchCategories = async () => {
       const querySnapshot = await getDocs(collection(db, "categories"));
       const categoriesData = querySnapshot.docs.map(doc => doc.data().name);
-      setCategories(categoriesData);
+      // Sort categories alphabetically
+      const sortedCategories = categoriesData.sort((a, b) => a.localeCompare(b));
+      setCategories(sortedCategories);
     };
 
     fetchCategories();
