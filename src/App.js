@@ -5,6 +5,7 @@ import CreatePost from './pages/CreatePost';
 import EditPost from './pages/EditPost';
 import CategoryView from './pages/CategoryView';
 import PostView from './pages/PostView';
+import SnowEffect from './components/SnowEffect';
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
@@ -31,24 +32,8 @@ function App() {
             minHeight: '100vh',
             position: 'relative',
           }}>
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              opacity: 0.4,
-              backgroundImage: `
-                radial-gradient(circle at 25px 25px, rgba(0, 0, 0, 0.1) 2%, transparent 0%),
-                radial-gradient(circle at 75px 75px, rgba(0, 0, 0, 0.1) 2%, transparent 0%)
-              `,
-              backgroundSize: '100px 100px',
-              animation: 'fadeInBackground 2s ease-in-out',
-              pointerEvents: 'none',
-              zIndex: 0,
-            }} />
-            
-            <div style={{ position: 'relative', zIndex: 1 }}>
+            <SnowEffect />
+            <div style={{ position: 'relative', zIndex: 2 }}>
               <Navbar />
               <Routes>
                 <Route path="/" element={<Home />} />
