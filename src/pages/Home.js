@@ -2,13 +2,29 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '../firebase-config';
 import { Link } from 'react-router-dom';
-import { Container, Card, CardContent, Typography, Grid, Box, Pagination } from '@mui/material';
-import CategoryIcon from '@mui/icons-material/Category';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { 
+  Container, 
+  Card, 
+  CardContent, 
+  Typography, 
+  Grid, 
+  Box, 
+  Pagination, 
+  Button, 
+  Chip,
+  Paper,
+  List,
+  ListItem,
+  ListItemText
+} from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 function Home() {
   const [posts, setPosts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [expandedCategories, setExpandedCategories] = useState({});
   const [page, setPage] = useState(1);
   const postsPerPage = 6;
   const { isOwner } = useAuth();
@@ -19,7 +35,6 @@ function Home() {
       const data = await getDocs(postsQuery);
       const postsData = data.docs.map(doc => ({ ...doc.data(), id: doc.id }));
       
-      // Filter out private posts for non-owner users
       const filteredPosts = isOwner 
         ? postsData 
         : postsData.filter(post => post.category !== "Behavioural Questions");
@@ -27,17 +42,33 @@ function Home() {
       setPosts(filteredPosts);
     };
 
+    const getCategories = async () => {
+      const querySnapshot = await getDocs(collection(db, "categories"));
+      const categoriesData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      // Filter out private categories for non-owner users
+      const filteredCategories = isOwner 
+        ? categoriesData 
+        : categoriesData.filter(cat => cat.name !== "Behavioural Questions");
+      
+      setCategories(filteredCategories);
+    };
+
     getPosts();
+    getCategories();
   }, [isOwner]);
 
   const formatDate = (timestamp) => {
-    if (!timestamp) return '';
+    if (!timestamp) return { month: '', day: '', full: '' };
     const date = timestamp.toDate();
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(date);
+    const month = date.toLocaleString('en-US', { month: 'short' });
+    const day = date.getDate();
+    const year = date.getFullYear();
+    const full = `${year} ${month} ${day}`;
+    return { month, day, full };
   };
 
   // Calculate pagination
@@ -50,8 +81,21 @@ function Home() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Group categories by parent
+  const parentCategories = categories.filter(cat => !cat.parentId);
+  const getChildCategories = (parentId) => 
+    categories.filter(cat => cat.parentId === parentId);
+
+  const handleCategoryClick = (categoryId, categoryName) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
+
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {/* Title Section - Full Width */}
       <Typography 
         variant="h4" 
         gutterBottom 
@@ -65,101 +109,231 @@ function Home() {
       >
         Latest Posts
       </Typography>
-      <Grid container spacing={3}>
-        {displayedPosts.map(post => (
-          <Grid item xs={12} sm={6} md={4} key={post.id}>
-            <Card 
-              sx={{ 
-                height: '100%', // Ensure consistent height
-                display: 'flex',
-                flexDirection: 'column',
-                background: 'rgba(255, 255, 255, 0.9)',
-                backdropFilter: 'blur(10px)',
-                borderRadius: '12px',
-                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 12px 40px 0 rgba(31, 38, 135, 0.25)',
-                  transition: 'all 0.3s ease'
-                }
-              }}
-            >
-              <CardContent sx={{ 
-                flexGrow: 1, // Allow content to fill available space
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between'
-              }}>
-                <div>
-                  <Typography 
-                    variant="h6" 
-                    component={Link} 
-                    to={`/post/${post.id}`} 
-                    sx={{ 
-                      textDecoration: 'none', 
-                      color: '#1976d2',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      mb: 1,
-                      '&:hover': {
-                        color: '#1565c0'
-                      }
-                    }}
-                  >
-                    {post.title}
-                  </Typography>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary" 
-                    sx={{ 
-                      mb: 2,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    {post.content.substring(0, 150)}...
-                  </Typography>
-                </div>
-                <Box sx={{ 
-                  display: 'flex', 
-                  gap: 2, 
-                  mt: 'auto', 
-                  color: 'text.secondary',
-                  alignItems: 'center'
-                }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <CategoryIcon fontSize="small" />
-                    <Typography variant="body2">
-                      {post.category}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <AccessTimeIcon fontSize="small" />
-                    <Typography variant="body2">
-                      {formatDate(post.timestamp)}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
+
+      {/* Content Grid - Below Title */}
+      <Grid container spacing={4}>
+        {/* Posts Section */}
+        <Grid item xs={12} md={8}>
+          <Grid container spacing={4}>
+            {displayedPosts.map(post => {
+              const date = formatDate(post.timestamp);
+              return (
+                <Grid item xs={12} key={post.id}>
+                  <Card sx={{ display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'visible' }}>
+                    {/* Month/Day Circle */}
+                    <Box sx={{
+                      position: 'absolute',
+                      left: -20,
+                      top: 20,
+                      width: 60,
+                      height: 60,
+                      borderRadius: '50%',
+                      backgroundColor: '#87CEEB',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}>
+                      <Typography variant="caption">{date.month}</Typography>
+                      <Typography variant="h6">{date.day}</Typography>
+                    </Box>
+
+                    <CardContent sx={{ pl: 6 }}>
+                      {/* Updated Title with bold effect */}
+                      <Typography 
+                        variant="h5" 
+                        component={Link} 
+                        to={`/post/${post.id}`}
+                        sx={{ 
+                          textDecoration: 'none', 
+                          color: 'inherit', 
+                          fontWeight: 600,
+                          '&:hover': { 
+                            color: '#1976d2',
+                            textDecoration: 'underline'
+                          }
+                        }}
+                      >
+                        {post.title}
+                      </Typography>
+
+                      {/* Publish Date */}
+                      <Typography 
+                        variant="subtitle2" 
+                        color="text.secondary"
+                        sx={{ display: 'flex', alignItems: 'center', mt: 1 }}
+                      >
+                        <span>Publish On</span>
+                        <Box component="span" sx={{ ml: 1 }}>{date.full}</Box>
+                      </Typography>
+
+                      {/* Category */}
+                      <Box sx={{ mt: 2 }}>
+                        <Chip 
+                          label={post.category}
+                          size="small"
+                          sx={{ 
+                            backgroundColor: '#87CEEB',
+                            color: 'white'
+                          }}
+                        />
+                      </Box>
+
+                      {/* Content Preview */}
+                      <Typography 
+                        variant="body1" 
+                        color="text.secondary"
+                        sx={{ 
+                          mt: 2,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: 'vertical'
+                        }}
+                      >
+                        {post.content}
+                      </Typography>
+
+                      {/* Read All Button */}
+                      <Box sx={{ mt: 2, textAlign: 'right' }}>
+                        <Button 
+                          component={Link}
+                          to={`/post/${post.id}`}
+                          variant="contained"
+                          sx={{ 
+                            backgroundColor: '#87CEEB',
+                            '&:hover': {
+                              backgroundColor: '#5F9EA0'
+                            }
+                          }}
+                        >
+                          Read All
+                        </Button>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
           </Grid>
-        ))}
+
+          {totalPages > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <Pagination 
+                count={totalPages} 
+                page={page} 
+                onChange={handlePageChange}
+                color="primary"
+                size="large"
+              />
+            </Box>
+          )}
+        </Grid>
+
+        {/* Updated Categories Section with adjusted spacing */}
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 2, backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
+            <Typography variant="h6" sx={{ 
+              p: 1, 
+              backgroundColor: '#87CEEB', 
+              color: 'white',
+              borderRadius: '4px'
+            }}>
+              Category
+            </Typography>
+            <List sx={{ py: 0 }}>
+              {parentCategories.map((category) => {
+                const hasChildren = getChildCategories(category.id).length > 0;
+                const isExpanded = expandedCategories[category.id];
+
+                return (
+                  <Box key={category.id} sx={{ py: 0 }}>
+                    <ListItem 
+                      onClick={() => hasChildren && handleCategoryClick(category.id, category.name)}
+                      component={hasChildren ? 'div' : Link}
+                      to={hasChildren ? undefined : `/category/${category.name}`}
+                      sx={{ 
+                        color: 'inherit', 
+                        textDecoration: 'none', 
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s ease',
+                        cursor: hasChildren ? 'pointer' : 'default',
+                        '&:hover': {
+                          backgroundColor: 'rgba(135, 206, 235, 0.1)',
+                          paddingLeft: '24px',
+                          color: '#1976d2'
+                        },
+                        display: 'flex',
+                        alignItems: 'center',
+                        py: 0.5,
+                        minHeight: '36px'
+                      }}
+                    >
+                      {hasChildren && (
+                        <Box sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
+                          {isExpanded ? (
+                            <KeyboardArrowDownIcon fontSize="small" />
+                          ) : (
+                            <KeyboardArrowRightIcon fontSize="small" />
+                          )}
+                        </Box>
+                      )}
+                      <ListItemText 
+                        primary={category.name}
+                        sx={{ 
+                          my: 0,
+                          '& .MuiTypography-root': {
+                            fontSize: '0.95rem',
+                            fontWeight: 600
+                          }
+                        }} 
+                      />
+                    </ListItem>
+                    {hasChildren && isExpanded && (
+                      <Box sx={{ my: 0 }}>
+                        {getChildCategories(category.id).map((child) => (
+                          <ListItem 
+                            key={child.id} 
+                            component={Link} 
+                            to={`/category/${child.name}`}
+                            sx={{ 
+                              pl: 4, 
+                              color: 'inherit', 
+                              textDecoration: 'none',
+                              transition: 'all 0.2s ease',
+                              '&:hover': {
+                                backgroundColor: 'rgba(135, 206, 235, 0.1)',
+                                paddingLeft: '40px',
+                                color: '#1976d2'
+                              },
+                              py: 0.5,
+                              minHeight: '32px'
+                            }}
+                          >
+                            <ListItemText 
+                              primary={child.name}
+                              sx={{ 
+                                my: 0,
+                                '& .MuiTypography-root': {
+                                  fontSize: '0.9rem',
+                                  fontWeight: 500
+                                }
+                              }} 
+                            />
+                          </ListItem>
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+                );
+              })}
+            </List>
+          </Paper>
+        </Grid>
       </Grid>
-      {totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <Pagination 
-            count={totalPages} 
-            page={page} 
-            onChange={handlePageChange}
-            color="primary"
-            size="large"
-          />
-        </Box>
-      )}
     </Container>
   );
 }

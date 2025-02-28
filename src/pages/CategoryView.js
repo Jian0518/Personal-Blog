@@ -2,10 +2,24 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase-config';
-import { Container, Typography, Grid, Card, CardContent, Box, Pagination } from '@mui/material';
+import { 
+  Container, 
+  Typography, 
+  Grid, 
+  Card, 
+  CardContent, 
+  Box, 
+  Pagination,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  Chip,
+  Button 
+} from '@mui/material';
 import { Link } from 'react-router-dom';
-import CategoryIcon from '@mui/icons-material/Category';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,61 +28,78 @@ function CategoryView() {
   const { isOwner } = useAuth();
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [expandedCategories, setExpandedCategories] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const postsPerPage = 6;
 
   useEffect(() => {
-    // Redirect non-owner users trying to access private category
     if (!isOwner && category === "Behavioural Questions") {
       navigate('/');
       return;
     }
 
-    const fetchPostsByCategory = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
+        // Fetch posts for this category
         const postsQuery = query(collection(db, "posts"), where("category", "==", category));
         const querySnapshot = await getDocs(postsQuery);
         const postsData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
         setPosts(postsData);
+
+        // Fetch categories for the sidebar
+        const categoriesSnapshot = await getDocs(collection(db, "categories"));
+        const categoriesData = categoriesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        const filteredCategories = isOwner 
+          ? categoriesData 
+          : categoriesData.filter(cat => cat.name !== "Behavioural Questions");
+        
+        setCategories(filteredCategories);
       } catch (err) {
-        setError('Failed to load posts');
+        setError('Failed to load data');
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPostsByCategory();
+    fetchData();
   }, [category, isOwner, navigate]);
 
   const formatDate = (timestamp) => {
-    if (!timestamp) return '';
+    if (!timestamp) return { month: '', day: '', full: '' };
     const date = timestamp.toDate();
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(date);
+    const month = date.toLocaleString('en-US', { month: 'short' });
+    const day = date.getDate();
+    const year = date.getFullYear();
+    const full = `${year} ${month} ${day}`;
+    return { month, day, full };
   };
 
-  // Calculate pagination
-  const totalPages = Math.ceil(posts.length / postsPerPage);
-  const startIndex = (page - 1) * postsPerPage;
-  const displayedPosts = posts.slice(startIndex, startIndex + postsPerPage);
+  const parentCategories = categories.filter(cat => !cat.parentId);
+  const getChildCategories = (parentId) => 
+    categories.filter(cat => cat.parentId === parentId);
 
-  const handlePageChange = (event, value) => {
-    setPage(value);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleCategoryClick = (categoryId) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
   };
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {/* Title Section - Full Width */}
       <Typography 
         variant="h4" 
         gutterBottom 
@@ -80,109 +111,215 @@ function CategoryView() {
           textShadow: '2px 2px 4px rgba(0,0,0,0.1)'
         }}
       >
-        Posts in {category} Category
+        Posts in {category}
       </Typography>
-      {displayedPosts.length === 0 ? (
-        <Typography variant="h6" align="center" color="text.secondary">
-          No posts available in this category.
-        </Typography>
-      ) : (
-        <Grid container spacing={3}>
-          {displayedPosts.map(post => (
-            <Grid item xs={12} sm={6} md={4} key={post.id}>
-              <Card 
-                sx={{ 
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: '12px',
-                  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 12px 40px 0 rgba(31, 38, 135, 0.25)',
-                    transition: 'all 0.3s ease'
-                  }
-                }}
-              >
-                <CardContent sx={{ 
-                  flexGrow: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between'
-                }}>
-                  <div>
-                    <Typography 
-                      variant="h6" 
-                      component={Link} 
-                      to={`/post/${post.id}`} 
-                      sx={{ 
-                        textDecoration: 'none', 
-                        color: '#1976d2',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        mb: 1,
-                        '&:hover': {
-                          color: '#1565c0'
-                        }
-                      }}
-                    >
-                      {post.title}
-                    </Typography>
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary" 
-                      sx={{ 
-                        mb: 2,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden'
-                      }}
-                    >
-                      {post.content.substring(0, 150)}...
-                    </Typography>
-                  </div>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    gap: 2, 
-                    mt: 'auto',
-                    color: 'text.secondary',
-                    alignItems: 'center'
-                  }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <CategoryIcon fontSize="small" />
-                      <Typography variant="body2">
-                        {post.category}
-                      </Typography>
+
+      {/* Content Grid - Below Title */}
+      <Grid container spacing={4}>
+        {/* Posts Section */}
+        <Grid item xs={12} md={8}>
+          <Grid container spacing={4}>
+            {posts.slice((page - 1) * postsPerPage, page * postsPerPage).map(post => {
+              const date = formatDate(post.timestamp);
+              return (
+                <Grid item xs={12} key={post.id}>
+                  <Card sx={{ display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'visible' }}>
+                    {/* Month/Day Circle */}
+                    <Box sx={{
+                      position: 'absolute',
+                      left: -20,
+                      top: 20,
+                      width: 60,
+                      height: 60,
+                      borderRadius: '50%',
+                      backgroundColor: '#87CEEB',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}>
+                      <Typography variant="caption">{date.month}</Typography>
+                      <Typography variant="h6">{date.day}</Typography>
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <AccessTimeIcon fontSize="small" />
-                      <Typography variant="body2">
-                        {formatDate(post.timestamp)}
+
+                    <CardContent sx={{ pl: 6 }}>
+                      <Typography 
+                        variant="h5" 
+                        component={Link} 
+                        to={`/post/${post.id}`}
+                        sx={{ 
+                          textDecoration: 'none', 
+                          color: 'inherit',
+                          fontWeight: 600,
+                          '&:hover': { 
+                            color: '#1976d2',
+                            textDecoration: 'underline'
+                          }
+                        }}
+                      >
+                        {post.title}
                       </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+
+                      <Typography variant="subtitle2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                        <span>Publish On</span>
+                        <Box component="span" sx={{ ml: 1 }}>{date.full}</Box>
+                      </Typography>
+
+                      <Box sx={{ mt: 2 }}>
+                        <Chip label={post.category} size="small" sx={{ backgroundColor: '#87CEEB', color: 'white' }} />
+                      </Box>
+
+                      <Typography 
+                        variant="body1" 
+                        color="text.secondary"
+                        sx={{ 
+                          mt: 2,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: 'vertical'
+                        }}
+                      >
+                        {post.content}
+                      </Typography>
+
+                      <Box sx={{ mt: 2, textAlign: 'right' }}>
+                        <Button 
+                          component={Link}
+                          to={`/post/${post.id}`}
+                          variant="contained"
+                          sx={{ 
+                            backgroundColor: '#87CEEB',
+                            '&:hover': { backgroundColor: '#5F9EA0' }
+                          }}
+                        >
+                          Read All
+                        </Button>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid>
+
+          {Math.ceil(posts.length / postsPerPage) > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <Pagination 
+                count={Math.ceil(posts.length / postsPerPage)} 
+                page={page} 
+                onChange={(e, value) => setPage(value)}
+                color="primary"
+                size="large"
+              />
+            </Box>
+          )}
         </Grid>
-      )}
-      {totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <Pagination 
-            count={totalPages} 
-            page={page} 
-            onChange={handlePageChange}
-            color="primary"
-            size="large"
-          />
-        </Box>
-      )}
+
+        {/* Categories Section */}
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 2, backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
+            <Typography variant="h6" sx={{ 
+              p: 1, 
+              backgroundColor: '#87CEEB', 
+              color: 'white',
+              borderRadius: '4px'
+            }}>
+              Category
+            </Typography>
+            <List sx={{ py: 0 }}>
+              {parentCategories.map((cat) => {
+                const hasChildren = getChildCategories(cat.id).length > 0;
+                const isExpanded = expandedCategories[cat.id];
+
+                return (
+                  <Box key={cat.id} sx={{ py: 0 }}>
+                    <ListItem 
+                      onClick={() => hasChildren && handleCategoryClick(cat.id)}
+                      component={hasChildren ? 'div' : Link}
+                      to={hasChildren ? undefined : `/category/${cat.name}`}
+                      sx={{ 
+                        color: 'inherit', 
+                        textDecoration: 'none', 
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s ease',
+                        cursor: hasChildren ? 'pointer' : 'default',
+                        '&:hover': {
+                          backgroundColor: 'rgba(135, 206, 235, 0.1)',
+                          paddingLeft: '24px',
+                          color: '#1976d2'
+                        },
+                        display: 'flex',
+                        alignItems: 'center',
+                        py: 0.5,
+                        minHeight: '36px'
+                      }}
+                    >
+                      {hasChildren && (
+                        <Box sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
+                          {isExpanded ? (
+                            <KeyboardArrowDownIcon fontSize="small" />
+                          ) : (
+                            <KeyboardArrowRightIcon fontSize="small" />
+                          )}
+                        </Box>
+                      )}
+                      <ListItemText 
+                        primary={cat.name}
+                        sx={{ 
+                          my: 0,
+                          '& .MuiTypography-root': {
+                            fontSize: '0.95rem',
+                            fontWeight: 600
+                          }
+                        }} 
+                      />
+                    </ListItem>
+                    {hasChildren && isExpanded && (
+                      <Box sx={{ my: 0 }}>
+                        {getChildCategories(cat.id).map((child) => (
+                          <ListItem 
+                            key={child.id} 
+                            component={Link} 
+                            to={`/category/${child.name}`}
+                            sx={{ 
+                              pl: 4, 
+                              color: 'inherit', 
+                              textDecoration: 'none',
+                              transition: 'all 0.2s ease',
+                              '&:hover': {
+                                backgroundColor: 'rgba(135, 206, 235, 0.1)',
+                                paddingLeft: '40px',
+                                color: '#1976d2'
+                              },
+                              py: 0.5,
+                              minHeight: '32px'
+                            }}
+                          >
+                            <ListItemText 
+                              primary={child.name}
+                              sx={{ 
+                                my: 0,
+                                '& .MuiTypography-root': {
+                                  fontSize: '0.9rem',
+                                  fontWeight: 500
+                                }
+                              }} 
+                            />
+                          </ListItem>
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+                );
+              })}
+            </List>
+          </Paper>
+        </Grid>
+      </Grid>
     </Container>
   );
 }
