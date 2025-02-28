@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../firebase-config';
 import { 
   Container, 
@@ -34,6 +34,7 @@ function CategoryView() {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const postsPerPage = 6;
+  const [recommendedPosts, setRecommendedPosts] = useState([]);
 
   useEffect(() => {
     if (!isOwner && category === "Behavioural Questions") {
@@ -62,6 +63,19 @@ function CategoryView() {
           : categoriesData.filter(cat => cat.name !== "Behavioural Questions");
         
         setCategories(filteredCategories);
+
+        // Add fetch recommended posts
+        const recommendedQuery = query(
+          collection(db, "posts"), 
+          where("isRecommended", "==", true),
+          orderBy("timestamp", "desc")
+        );
+        const recommendedSnapshot = await getDocs(recommendedQuery);
+        const recommendedData = recommendedSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setRecommendedPosts(recommendedData);
       } catch (err) {
         setError('Failed to load data');
         console.error(err);
@@ -237,7 +251,7 @@ function CategoryView() {
 
         {/* Categories Section */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
+          <Paper sx={{ p: 2, mb: 3, backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
             <Typography variant="h6" sx={{ 
               p: 1, 
               background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
@@ -332,6 +346,54 @@ function CategoryView() {
                   </Box>
                 );
               })}
+            </List>
+          </Paper>
+
+          {/* Recommendations Section */}
+          <Paper sx={{ p: 2, mb: 3, backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
+            <Typography variant="h6" sx={{ 
+              p: 1, 
+              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+              color: 'white',
+              borderRadius: '4px',
+              mb: 2
+            }}>
+              Recommended Posts
+            </Typography>
+            <List sx={{ py: 0 }}>
+              {recommendedPosts.map((post) => (
+                <ListItem 
+                  key={post.id}
+                  component={Link}
+                  to={`/post/${post.id}`}
+                  sx={{
+                    py: 1,
+                    px: 2,
+                    transition: 'all 0.2s',
+                    borderRadius: 1,
+                    '&:hover': {
+                      backgroundColor: 'rgba(33, 150, 243, 0.08)',
+                      transform: 'translateX(8px)'
+                    }
+                  }}
+                >
+                  <Typography 
+                    variant="body1"
+                    sx={{
+                      color: '#000', // Black color
+                      textDecoration: 'none',
+                      fontWeight: 500,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}
+                  >
+                    {post.title}
+                  </Typography>
+                </ListItem>
+              ))}
             </List>
           </Paper>
         </Grid>

@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
 import { db } from '../firebase-config';
 import { Link } from 'react-router-dom';
-import { 
-  Container, 
-  Card, 
-  CardContent, 
-  Typography, 
-  Grid, 
-  Box, 
-  Pagination, 
-  Button, 
+import {
+  Container,
+  Card,
+  CardContent,
+  Typography,
+  Grid,
+  Box,
+  Pagination,
+  Button,
   Chip,
   Paper,
   List,
@@ -27,6 +27,7 @@ function Home() {
   const [expandedCategories, setExpandedCategories] = useState({});
   const [page, setPage] = useState(1);
   const postsPerPage = 6;
+  const [recommendedPosts, setRecommendedPosts] = useState([]);
   const { isOwner } = useAuth();
 
   useEffect(() => {
@@ -34,11 +35,11 @@ function Home() {
       const postsQuery = query(collection(db, "posts"), orderBy("timestamp", "desc"));
       const data = await getDocs(postsQuery);
       const postsData = data.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-      
-      const filteredPosts = isOwner 
-        ? postsData 
+
+      const filteredPosts = isOwner
+        ? postsData
         : postsData.filter(post => post.category !== "Behavioural Questions");
-      
+
       setPosts(filteredPosts);
     };
 
@@ -48,17 +49,32 @@ function Home() {
         id: doc.id,
         ...doc.data()
       }));
-      
+
       // Filter out private categories for non-owner users
-      const filteredCategories = isOwner 
-        ? categoriesData 
+      const filteredCategories = isOwner
+        ? categoriesData
         : categoriesData.filter(cat => cat.name !== "Behavioural Questions");
-      
+
       setCategories(filteredCategories);
+    };
+
+    const fetchRecommendedPosts = async () => {
+      const postsQuery = query(
+        collection(db, "posts"),
+        where("isRecommended", "==", true),
+        orderBy("timestamp", "desc")
+      );
+      const querySnapshot = await getDocs(postsQuery);
+      const recommendedData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setRecommendedPosts(recommendedData);
     };
 
     getPosts();
     getCategories();
+    fetchRecommendedPosts();
   }, [isOwner]);
 
   const formatDate = (timestamp) => {
@@ -83,7 +99,7 @@ function Home() {
 
   // Group categories by parent
   const parentCategories = categories.filter(cat => !cat.parentId);
-  const getChildCategories = (parentId) => 
+  const getChildCategories = (parentId) =>
     categories.filter(cat => cat.parentId === parentId);
 
   const handleCategoryClick = (categoryId, categoryName) => {
@@ -96,11 +112,11 @@ function Home() {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {/* Title Section - Full Width */}
-      <Typography 
-        variant="h4" 
-        gutterBottom 
-        sx={{ 
-          textAlign: 'center', 
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{
+          textAlign: 'center',
           mb: 4,
           color: '#1976d2',
           fontWeight: 'bold',
@@ -136,20 +152,20 @@ function Home() {
                       color: 'white',
                       boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)'
                     }}>
-                      <Typography 
-                        variant="h6" 
-                        sx={{ 
+                      <Typography
+                        variant="h6"
+                        sx={{
                           fontSize: '1.2rem',
-                          mb: 0.5 
+                          mb: 0.5
                         }}
                       >
                         {date.month}
                       </Typography>
-                      <Typography 
-                        variant="h4" 
-                        sx={{ 
+                      <Typography
+                        variant="h4"
+                        sx={{
                           fontWeight: 'bold',
-                          lineHeight: 1 
+                          lineHeight: 1
                         }}
                       >
                         {date.day}
@@ -158,15 +174,15 @@ function Home() {
 
                     <CardContent sx={{ pl: 9 }}>
                       {/* Updated Title with bold effect */}
-                      <Typography 
-                        variant="h5" 
-                        component={Link} 
+                      <Typography
+                        variant="h5"
+                        component={Link}
                         to={`/post/${post.id}`}
-                        sx={{ 
-                          textDecoration: 'none', 
-                          color: 'inherit', 
+                        sx={{
+                          textDecoration: 'none',
+                          color: 'inherit',
                           fontWeight: 600,
-                          '&:hover': { 
+                          '&:hover': {
                             color: '#1976d2',
                             textDecoration: 'underline'
                           }
@@ -176,8 +192,8 @@ function Home() {
                       </Typography>
 
                       {/* Publish Date */}
-                      <Typography 
-                        variant="subtitle2" 
+                      <Typography
+                        variant="subtitle2"
                         color="text.secondary"
                         sx={{ display: 'flex', alignItems: 'center', mt: 1 }}
                       >
@@ -187,10 +203,10 @@ function Home() {
 
                       {/* Category */}
                       <Box sx={{ mt: 2 }}>
-                        <Chip 
+                        <Chip
                           label={post.category}
                           size="small"
-                          sx={{ 
+                          sx={{
                             backgroundColor: '#87CEEB',
                             color: 'white'
                           }}
@@ -198,10 +214,10 @@ function Home() {
                       </Box>
 
                       {/* Content Preview */}
-                      <Typography 
-                        variant="body1" 
+                      <Typography
+                        variant="body1"
                         color="text.secondary"
-                        sx={{ 
+                        sx={{
                           mt: 2,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -215,11 +231,11 @@ function Home() {
 
                       {/* Read All Button */}
                       <Box sx={{ mt: 2, textAlign: 'right' }}>
-                        <Button 
+                        <Button
                           component={Link}
                           to={`/post/${post.id}`}
                           variant="contained"
-                          sx={{ 
+                          sx={{
                             backgroundColor: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
                             '&:hover': {
                               backgroundColor: '#5F9EA0'
@@ -238,9 +254,9 @@ function Home() {
 
           {totalPages > 1 && (
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-              <Pagination 
-                count={totalPages} 
-                page={page} 
+              <Pagination
+                count={totalPages}
+                page={page}
                 onChange={handlePageChange}
                 color="primary"
                 size="large"
@@ -249,12 +265,13 @@ function Home() {
           )}
         </Grid>
 
-        {/* Updated Categories Section with adjusted spacing */}
+        {/* Right Sidebar */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
-            <Typography variant="h6" sx={{ 
-              p: 1, 
-              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)', 
+          {/* Categories Section */}
+          <Paper sx={{ p: 2, mb: 3, backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
+            <Typography variant="h6" sx={{
+              p: 1,
+              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
               color: 'white',
               borderRadius: '4px'
             }}>
@@ -267,13 +284,13 @@ function Home() {
 
                 return (
                   <Box key={category.id} sx={{ py: 0 }}>
-                    <ListItem 
+                    <ListItem
                       onClick={() => hasChildren && handleCategoryClick(category.id, category.name)}
                       component={hasChildren ? 'div' : Link}
                       to={hasChildren ? undefined : `/category/${category.name}`}
-                      sx={{ 
-                        color: 'inherit', 
-                        textDecoration: 'none', 
+                      sx={{
+                        color: 'inherit',
+                        textDecoration: 'none',
                         fontWeight: 'bold',
                         transition: 'all 0.2s ease',
                         cursor: hasChildren ? 'pointer' : 'default',
@@ -297,27 +314,27 @@ function Home() {
                           )}
                         </Box>
                       )}
-                      <ListItemText 
+                      <ListItemText
                         primary={category.name}
-                        sx={{ 
+                        sx={{
                           my: 0,
                           '& .MuiTypography-root': {
                             fontSize: '0.95rem',
                             fontWeight: 600
                           }
-                        }} 
+                        }}
                       />
                     </ListItem>
                     {hasChildren && isExpanded && (
                       <Box sx={{ my: 0 }}>
                         {getChildCategories(category.id).map((child) => (
-                          <ListItem 
-                            key={child.id} 
-                            component={Link} 
+                          <ListItem
+                            key={child.id}
+                            component={Link}
                             to={`/category/${child.name}`}
-                            sx={{ 
-                              pl: 4, 
-                              color: 'inherit', 
+                            sx={{
+                              pl: 4,
+                              color: 'inherit',
                               textDecoration: 'none',
                               transition: 'all 0.2s ease',
                               '&:hover': {
@@ -329,15 +346,15 @@ function Home() {
                               minHeight: '32px'
                             }}
                           >
-                            <ListItemText 
+                            <ListItemText
                               primary={child.name}
-                              sx={{ 
+                              sx={{
                                 my: 0,
                                 '& .MuiTypography-root': {
                                   fontSize: '0.9rem',
                                   fontWeight: 500
                                 }
-                              }} 
+                              }}
                             />
                           </ListItem>
                         ))}
@@ -346,6 +363,53 @@ function Home() {
                   </Box>
                 );
               })}
+            </List>
+          </Paper>
+              {/* Recommendations Section */}
+          <Paper sx={{ p: 2, backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
+            <Typography variant="h6" sx={{ 
+              p: 1, 
+              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+              color: 'white',
+              borderRadius: '4px',
+              mb: 2
+            }}>
+              Recommended Posts
+            </Typography>
+            <List sx={{ py: 0 }}>
+              {recommendedPosts.map((post) => (
+                <ListItem 
+                  key={post.id}
+                  component={Link}
+                  to={`/post/${post.id}`}
+                  sx={{
+                    py: 1,
+                    px: 2,
+                    transition: 'all 0.2s',
+                    borderRadius: 1,
+                    '&:hover': {
+                      backgroundColor: 'rgba(33, 150, 243, 0.08)',
+                      transform: 'translateX(8px)'
+                    }
+                  }}
+                >
+                  <Typography 
+                    variant="body1"
+                    sx={{
+                      color: '#000',
+                      textDecoration: 'none',
+                      fontWeight: 500,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}
+                  >
+                    {post.title}
+                  </Typography>
+                </ListItem>
+              ))}
             </List>
           </Paper>
         </Grid>

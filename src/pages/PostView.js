@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase-config';
-import { Container, Typography, Paper, Button, Box } from '@mui/material';
+import { Container, Typography, Paper, Button, Box, IconButton } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Comments from '../components/Comments';
 import { useAuth } from '../contexts/AuthContext';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 
 function PostView() {
   const { id } = useParams();
@@ -17,6 +19,7 @@ function PostView() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { isOwner } = useAuth();
+  const [isRecommended, setIsRecommended] = useState(false);
 
   useEffect(() => {
     const getPost = async () => {
@@ -25,7 +28,9 @@ function PostView() {
         const docRef = doc(db, "posts", id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setPost({ ...docSnap.data(), id: docSnap.id });
+          const postData = docSnap.data();
+          setPost({ ...postData, id: docSnap.id });
+          setIsRecommended(postData.isRecommended || false);
         } else {
           setError('Post not found');
         }
@@ -48,15 +53,40 @@ function PostView() {
     }
   };
 
+  const toggleRecommendation = async () => {
+    try {
+      const docRef = doc(db, "posts", id);
+      await updateDoc(docRef, {
+        isRecommended: !isRecommended
+      });
+      setIsRecommended(!isRecommended);
+    } catch (err) {
+      console.error('Failed to update recommendation status:', err);
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
     <Container maxWidth="md" style={{ marginTop: '2rem' }}>
       <Paper style={{ padding: '2rem' }}>
-        <Typography variant="h4" gutterBottom>
-          {post.title}
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Typography variant="h4">
+            {post.title}
+          </Typography>
+          {isOwner && (
+            <IconButton 
+              onClick={toggleRecommendation}
+              sx={{ 
+                color: isRecommended ? '#FFD700' : 'inherit',
+                '&:hover': { color: '#FFD700' }
+              }}
+            >
+              {isRecommended ? <StarIcon /> : <StarBorderIcon />}
+            </IconButton>
+          )}
+        </Box>
         <Typography color="textSecondary" gutterBottom>
           Category: {post.category}
         </Typography>
