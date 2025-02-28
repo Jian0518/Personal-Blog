@@ -127,24 +127,40 @@ function CategoryView() {
                     {/* Month/Day Circle */}
                     <Box sx={{
                       position: 'absolute',
-                      left: -20,
-                      top: 20,
-                      width: 60,
-                      height: 60,
+                      left: -30,
+                      top: -20,
+                      width: 90,
+                      height: 90,
                       borderRadius: '50%',
-                      backgroundColor: '#87CEEB',
+                      background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: 'white',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                      boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)'
                     }}>
-                      <Typography variant="caption">{date.month}</Typography>
-                      <Typography variant="h6">{date.day}</Typography>
+                      <Typography 
+                        variant="h6" 
+                        sx={{ 
+                          fontSize: '1.2rem',
+                          mb: 0.5 
+                        }}
+                      >
+                        {date.month}
+                      </Typography>
+                      <Typography 
+                        variant="h4" 
+                        sx={{ 
+                          fontWeight: 'bold',
+                          lineHeight: 1 
+                        }}
+                      >
+                        {date.day}
+                      </Typography>
                     </Box>
 
-                    <CardContent sx={{ pl: 6 }}>
+                    <CardContent sx={{ pl: 9 }}>
                       <Typography 
                         variant="h5" 
                         component={Link} 
@@ -192,7 +208,7 @@ function CategoryView() {
                           to={`/post/${post.id}`}
                           variant="contained"
                           sx={{ 
-                            backgroundColor: '#87CEEB',
+                            backgroundColor: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
                             '&:hover': { backgroundColor: '#5F9EA0' }
                           }}
                         >
@@ -224,7 +240,7 @@ function CategoryView() {
           <Paper sx={{ p: 2, backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
             <Typography variant="h6" sx={{ 
               p: 1, 
-              backgroundColor: '#87CEEB', 
+              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
               color: 'white',
               borderRadius: '4px'
             }}>
