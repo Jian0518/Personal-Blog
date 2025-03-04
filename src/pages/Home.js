@@ -385,18 +385,19 @@ function Home() {
                   sx={{
                     py: 1,
                     px: 2,
-                    transition: 'all 0.2s',
-                    borderRadius: 1,
+                    color: 'inherit',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s ease',
                     '&:hover': {
-                      backgroundColor: 'rgba(33, 150, 243, 0.08)',
-                      transform: 'translateX(8px)'
+                      backgroundColor: 'rgba(135, 206, 235, 0.1)',
+                      paddingLeft: '24px',
+                      color: '#1976d2'
                     }
                   }}
                 >
                   <Typography 
                     variant="body1"
                     sx={{
-                      color: '#000',
                       textDecoration: 'none',
                       fontWeight: 500,
                       overflow: 'hidden',
