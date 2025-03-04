@@ -46,7 +46,11 @@ function CategoryView() {
       try {
         setLoading(true);
         // Fetch posts for this category
-        const postsQuery = query(collection(db, "posts"), where("category", "==", category));
+        const postsQuery = query(
+          collection(db, "posts"), 
+          where("category", "==", category),
+          orderBy("timestamp", "desc")
+        );
         const querySnapshot = await getDocs(postsQuery);
         const postsData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
         setPosts(postsData);
