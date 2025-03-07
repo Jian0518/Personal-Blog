@@ -14,6 +14,7 @@ import Comments from '../components/Comments';
 import { useAuth } from '../contexts/AuthContext';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
+import { track } from '@vercel/analytics';
 
 function PostView() {
   const { id } = useParams();
@@ -34,6 +35,13 @@ function PostView() {
           const postData = docSnap.data();
           setPost({ ...postData, id: docSnap.id });
           setIsRecommended(postData.isRecommended || false);
+          
+          // Track post view
+          track('post_viewed', { 
+            postId: docSnap.id,
+            title: postData.title,
+            category: postData.category
+          });
         } else {
           setError('Post not found');
         }

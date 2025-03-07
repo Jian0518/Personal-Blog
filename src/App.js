@@ -12,6 +12,7 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import { AuthProvider } from './contexts/AuthContext';
 import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material';
+import { Analytics } from '@vercel/analytics/react';
 
 function App() {
   const theme = createTheme({
@@ -44,6 +45,7 @@ function App() {
               </Routes>
             </div>
           </div>
+          <Analytics />
         </Router>
       </AuthProvider>
     </MuiThemeProvider>

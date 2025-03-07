@@ -22,6 +22,7 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { track } from '@vercel/analytics';
 
 function CategoryView() {
   const { category } = useParams();
@@ -41,6 +42,11 @@ function CategoryView() {
       navigate('/');
       return;
     }
+
+    // Track category view
+    track('category_viewed', {
+      category,
+    });
 
     const fetchData = async () => {
       try {

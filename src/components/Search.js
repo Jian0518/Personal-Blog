@@ -18,6 +18,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase-config';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { track } from '@vercel/analytics';
 
 function Search() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,6 +31,11 @@ function Search() {
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
+
+    // Track search action
+    track('search_performed', {
+      searchTerm,
+    });
 
     setIsSearching(true);
     setIsDialogOpen(true);
@@ -57,6 +63,12 @@ function Search() {
       });
 
       setSearchResults(results);
+      
+      // Track search results
+      track('search_results', {
+        searchTerm,
+        resultCount: results.length
+      });
     } catch (error) {
       console.error("Error searching posts:", error);
     } finally {

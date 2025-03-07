@@ -10,6 +10,7 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { track } from '@vercel/analytics';
 
 function CreatePost() {
   const [title, setTitle] = useState('');
@@ -32,12 +33,19 @@ function CreatePost() {
 
   const createPost = async (e) => {
     e.preventDefault();
-    await addDoc(collection(db, "posts"), {
+    const docRef = await addDoc(collection(db, "posts"), {
       title,
       content,
       category,
       timestamp: new Date(),
     });
+    
+    // Track post creation
+    track('post_created', { 
+      category,
+      postId: docRef.id
+    });
+    
     navigate('/');
   };
 
